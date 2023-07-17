@@ -31,12 +31,18 @@ class _GroceryListScreenState extends State<GroceryListScreen> {
         'shopping-list.json');
     final response = await http.get(url);
 
-    print(response.statusCode);
+    // print(response.statusCode);
 
     if (response.statusCode >= 400) {
       setState(() {
         _errorMessage = 'Failed to load data. Try again later.';
       });
+    }
+    if (response.body == 'null') {
+      setState(() {
+        _isLoading = false;
+      });
+      return;
     }
     final Map<String, dynamic> listData = json.decode(response.body);
     final List<GroceryItem> loadedItems = [];
@@ -78,6 +84,10 @@ class _GroceryListScreenState extends State<GroceryListScreen> {
   }
 
   void _removeItem(GroceryItem item) {
+    final url = Uri.https('shopping-list-6fe1c-default-rtdb.firebaseio.com',
+        'shopping-list/${item.id}.json');
+    http.delete(url);
+
     setState(() {
       _groceryItems.remove(item);
     });
