@@ -15,6 +15,8 @@ class GroceryListScreen extends StatefulWidget {
 
 class _GroceryListScreenState extends State<GroceryListScreen> {
   List<GroceryItem> _groceryItems = [];
+  var _isLoading = true;
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -23,11 +25,19 @@ class _GroceryListScreenState extends State<GroceryListScreen> {
   }
 
   //function to load the data from backend
-
+// shopping-list-6fe1c-default-rtdb
   void _loadData() async {
     final url = Uri.https('shopping-list-6fe1c-default-rtdb.firebaseio.com',
         'shopping-list.json');
     final response = await http.get(url);
+
+    print(response.statusCode);
+
+    if (response.statusCode >= 400) {
+      setState(() {
+        _errorMessage = 'Failed to load data. Try again later.';
+      });
+    }
     final Map<String, dynamic> listData = json.decode(response.body);
     final List<GroceryItem> loadedItems = [];
     for (final item in listData.entries) {
@@ -46,6 +56,7 @@ class _GroceryListScreenState extends State<GroceryListScreen> {
     }
     setState(() {
       _groceryItems = loadedItems;
+      _isLoading = false;
     });
   }
 
@@ -96,6 +107,13 @@ class _GroceryListScreenState extends State<GroceryListScreen> {
         ],
       ),
     );
+
+    if (_isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+
     if (_groceryItems.isNotEmpty) {
       content = ListView.builder(
         itemCount: _groceryItems.length,
@@ -112,6 +130,15 @@ class _GroceryListScreenState extends State<GroceryListScreen> {
                 color: _groceryItems[index].category.color),
             trailing: Text(_groceryItems[index].quantity.toString()),
           ),
+        ),
+      );
+    }
+
+    if (_errorMessage != null) {
+      content = Center(
+        child: Text(
+          _errorMessage!,
+          style: Theme.of(context).textTheme.titleLarge,
         ),
       );
     }
